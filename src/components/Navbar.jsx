@@ -2,12 +2,15 @@ import { useState, useRef, useEffect } from 'react'
 
 export default function Navbar({ active, setActive, onLogout }) {
   const [ddOpen, setDdOpen] = useState(false)
-  const [mobileMenu, setMobileMenu] = useState(false) // ✅ added
+  const [mobileMenu, setMobileMenu] = useState(false)
   const ddRef = useRef()
 
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handler = e => {
-      if (ddRef.current && !ddRef.current.contains(e.target)) setDdOpen(false)
+      if (ddRef.current && !ddRef.current.contains(e.target)) {
+        setDdOpen(false)
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -17,10 +20,10 @@ export default function Navbar({ active, setActive, onLogout }) {
     <button
       onClick={() => {
         setActive(page)
-        setMobileMenu(false) // ✅ close mobile menu
+        setMobileMenu(false)
       }}
       style={{
-        padding: '6px 16px',
+        padding: '10px 16px',
         background: active === page ? 'rgba(255,255,255,0.18)' : 'transparent',
         border: 'none',
         color: 'rgba(255,255,255,0.92)',
@@ -30,14 +33,15 @@ export default function Navbar({ active, setActive, onLogout }) {
         fontFamily: 'DM Sans, sans-serif',
         cursor: 'pointer',
         transition: 'background 0.15s',
-        width: mobileMenu ? '100%' : 'auto' // ✅ mobile full width
+        width: mobileMenu ? '100%' : 'auto',
+        textAlign: mobileMenu ? 'left' : 'center',
       }}
     >
       {label}
     </button>
   )
 
-  const gatePassActive = ['preapproval', 'visitor'].includes(active)
+  const isGatePassActive = ['preapproval', 'visitor'].includes(active)
 
   return (
     <nav style={{
@@ -46,55 +50,51 @@ export default function Navbar({ active, setActive, onLogout }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 62,
+      height: 64,
       position: 'sticky',
       top: 0,
       zIndex: 100,
       boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
     }}>
 
-      {/* LEFT */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
+      {/* LEFT SIDE - Logo + Desktop Navigation */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 34, height: 34, background: 'rgba(255,255,255,0.15)',
-            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </div>
-          <span className="playfair" style={{ fontSize: 16, color: '#fff', fontWeight: 600 }}>
-            TPL Gate Pass
-          </span>
+        <div style={{ 
+          fontWeight: 700, 
+          fontSize: 20, 
+          color: '#fff',
+          fontFamily: 'DM Sans, serif'
+        }}>
+          TPL Gate Pass
         </div>
 
-        {/* Desktop Nav */}
+        {/* Desktop Navigation */}
         <div style={{
-          display: window.innerWidth < 768 ? 'none' : 'flex',
-          gap: 4,
-          alignItems: 'center'
-        }}>
+          display: 'none',
+          gap: 6,
+          alignItems: 'center',
+          marginLeft: 20
+        }} className="desktop-nav">
           {navBtn('Home', 'home')}
 
-          {/* Dropdown */}
+          {/* Gate Pass Dropdown */}
           <div ref={ddRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setDdOpen(v => !v)}
               style={{
-                padding: '6px 16px',
-                background: gatePassActive ? 'rgba(255,255,255,0.18)' : 'transparent',
+                padding: '10px 16px',
+                background: isGatePassActive ? 'rgba(255,255,255,0.18)' : 'transparent',
                 border: 'none',
                 color: 'rgba(255,255,255,0.92)',
                 borderRadius: 6,
                 fontSize: 14,
+                fontWeight: isGatePassActive ? 500 : 400,
                 cursor: 'pointer',
+                fontFamily: 'DM Sans, sans-serif',
               }}
             >
-              Gate Pass ▼
+              Gate Pass {ddOpen ? '▲' : '▼'}
             </button>
 
             {ddOpen && (
@@ -105,80 +105,103 @@ export default function Navbar({ active, setActive, onLogout }) {
                 background: '#fff',
                 borderRadius: 10,
                 border: '1px solid var(--border)',
-                minWidth: 210,
+                boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
+                minWidth: 220,
+                overflow: 'hidden',
+                zIndex: 101,
               }}>
-                {[
-                  { label: 'Pre-Approval Pass', page: 'preapproval' },
-                  { label: 'Visitor Pass', page: 'visitor' },
-                ].map(item => (
-                  <button
-                    key={item.page}
-                    onClick={() => {
-                      setActive(item.page)
-                      setDdOpen(false)
-                    }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      padding: '10px 14px',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                <button
+                  onClick={() => { setActive('preapproval'); setDdOpen(false); }}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                  }}
+                >
+                  Pre-Approval Pass
+                </button>
+                <button
+                  onClick={() => { setActive('visitor'); setDdOpen(false); }}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                  }}
+                >
+                  Visitor Pass
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* RIGHT */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* RIGHT SIDE */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Hamburger */}
         <button
           onClick={() => setMobileMenu(v => !v)}
           style={{
-            display: window.innerWidth < 768 ? 'block' : 'none',
+            display: 'none',
             background: 'transparent',
             border: 'none',
             color: '#fff',
-            fontSize: 20,
-            cursor: 'pointer'
+            fontSize: 26,
+            cursor: 'pointer',
+            padding: '4px 8px',
           }}
+          className="mobile-hamburger"
         >
           ☰
         </button>
 
-        {/* Desktop User */}
+        {/* Desktop User Info */}
         <div style={{
-          display: window.innerWidth < 768 ? 'none' : 'flex',
+          display: 'none',
           alignItems: 'center',
-          gap: 8
-        }}>
+          gap: 10
+        }} className="desktop-user">
           <div style={{
-            width: 34, height: 34, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff'
-          }}>A</div>
-          <span style={{ fontSize: 13, color: '#fff' }}>Admin</span>
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 600,
+          }}>
+            A
+          </div>
+          <div>
+            <div style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>Admin</div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>IT Department</div>
+          </div>
         </div>
 
-        {/* Logout */}
+        {/* Logout Button */}
         <button
           onClick={onLogout}
           style={{
-            padding: '6px 12px',
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.25)',
+            padding: '8px 16px',
+            background: 'rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.3)',
             color: '#fff',
             borderRadius: 6,
-            fontSize: 13,
+            fontSize: 13.5,
+            fontWeight: 500,
             cursor: 'pointer',
+            transition: 'all 0.2s',
           }}
         >
           Logout
@@ -189,14 +212,16 @@ export default function Navbar({ active, setActive, onLogout }) {
       {mobileMenu && (
         <div style={{
           position: 'absolute',
-          top: 62,
+          top: 64,
           left: 0,
           width: '100%',
           background: 'var(--green)',
-          padding: 16,
+          padding: '20px 16px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 10
+          gap: 8,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          zIndex: 99,
         }}>
           {navBtn('Home', 'home')}
           {navBtn('Pre-Approval Pass', 'preapproval')}
@@ -204,6 +229,32 @@ export default function Navbar({ active, setActive, onLogout }) {
         </div>
       )}
 
+      {/* Media Queries for Responsive Behavior */}
+      <style jsx>{`
+        @media (min-width: 768px) {
+          .desktop-nav {
+            display: flex !important;
+          }
+          .mobile-hamburger {
+            display: none !important;
+          }
+          .desktop-user {
+            display: flex !important;
+          }
+        }
+
+        @media (max-width: 767px) {
+          .desktop-nav {
+            display: none !important;
+          }
+          .mobile-hamburger {
+            display: block !important;
+          }
+          .desktop-user {
+            display: none !important;
+          }
+        }
+      `}</style>
     </nav>
   )
 }
