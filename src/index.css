@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --green: #1a5c2a;
+  --green-mid: #2d7a3e;
+  --green-light: #e8f5e9;
+  --gold: #c8a84b;
+  --gold-light: #fdf8ee;
+  --border: #e2e0d8;
+  --muted: #6b6860;
+  --danger: #c0392b;
+  --surface: #ffffff;
+  --bg: #f5f4f0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+input,
+select,
+textarea {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 12px;
+  width: 100%;
+  background: #fff;
+  color: #1a1a1a;
+  transition: border 0.15s, box-shadow 0.15s;
+  outline: none;
+  appearance: auto;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--green-mid);
+  box-shadow: 0 0 0 3px rgba(29, 94, 46, 0.1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+button {
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.playfair {
+  font-family: 'Playfair Display', serif;
+}
