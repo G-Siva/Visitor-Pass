@@ -1,36 +1,58 @@
 import { useState } from 'react'
+import { savePass, getAllPasses } from '../utils/store'
 import {
   PageWrapper, PageHeader, Card, Field,
-  SearchBar, SearchField, SmallInput, SmallSelect, SearchButton,
-  SuccessBanner, ActionButtons,
+  SearchBar, SearchField, SmallSelect, SearchButton,
+  ActionButtons,
 } from '../components/FormComponents'
 
 const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '/')
 
+const emptyForm = {
+  visitorsNumber: '', visitorsName: '', visitorCompany: '',
+  departmentCode: '', purpose: '', visitorsType: '',
+  areaOfVisit: '', visitFrom: '', visitTo: '',
+}
+
 export default function PreApprovalPass() {
   const [saved, setSaved] = useState(false)
-
-  const [form, setForm] = useState({
-    visitorsNumber: '',
-    visitorsName: '',
-    visitorCompany: '',
-    departmentCode: '',
-    purpose: '',
-    visitorsType: '',
-    areaOfVisit: '',
-    visitFrom: '',
-    visitTo: '',
-  })
-
-  const set = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
-
-  const handleSave = () => setSaved(true)
-  const handleCancel = () => {
-    setSaved(false)
-    setForm({ visitorsNumber: '', visitorsName: '', visitorCompany: '', departmentCode: '', purpose: '', visitorsType: '', areaOfVisit: '', visitFrom: '', visitTo: '' })
-  }
+  const [generatedNumber, setGeneratedNumber] = useState('')
+  const [error, setError] = useState('')
+  const [form, setForm] = useState(emptyForm)
 
   const S = { padding: '7px 10px', fontSize: 13 }
+  const set = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
+
+  const handleSave = () => {
+    setError('')
+    if (!form.visitorsName.trim()) {
+      setError('Visitor Name is required.')
+      return
+    }
+    const number = savePass(form)
+    setGeneratedNumber(number)
+    setForm(f => ({ ...f, visitorsNumber: number }))
+    setSaved(true)
+  }
+
+  const handleCancel = () => {
+    setSaved(false)
+    setGeneratedNumber('')
+    setError('')
+    setForm(emptyForm)
+  }
+
+  // Search existing passes
+  const [passes] = useState(() => getAllPasses())
+  const [selectedPass, setSelectedPass] = useState('')
+
+  const handleSearch = (e) => {
+    const number = e.target.value
+    setSelectedPass(number)
+    if (!number) { setForm(emptyForm); return }
+    const pass = getAllPasses().find(p => p.passNumber === number)
+    if (pass) setForm({ ...pass })
+  }
 
   return (
     <PageWrapper>
@@ -47,20 +69,20 @@ export default function PreApprovalPass() {
 
       <Card style={{ marginBottom: 16 }}>
 
-        {/* Search + Info banner row - FIXED FOR MOBILE */}
-        <div 
-          className="search-info-row" 
-          style={{
-            display: 'flex',
-            flexDirection: 'row', 
-            gap: 16, 
-            marginBottom: 16 
-          }}
-        >
+        {/* Search + Info row */}
+        <div className="search-info-row" style={{ display: 'flex', flexDirection: 'row', gap: 16, marginBottom: 16 }}>
           <div style={{ flex: '1 1 auto' }}>
             <SearchBar>
-              <SearchField label="Search by Visitor No">
-                <SmallInput placeholder="e.g. 83" />
+              <SearchField label="Search Existing Pass">
+                <SmallSelect value={selectedPass} onChange={handleSearch}>
+                  <option value="">— Select Pass —</option>
+                  {passes.length === 0 && <option disabled>No saved passes yet</option>}
+                  {passes.map(p => (
+                    <option key={p.passNumber} value={p.passNumber}>
+                      {p.passNumber} — {p.visitorsName}
+                    </option>
+                  ))}
+                </SmallSelect>
               </SearchField>
               <SearchField label="Financial Year">
                 <SmallSelect>
@@ -73,17 +95,11 @@ export default function PreApprovalPass() {
             </SearchBar>
           </div>
 
-          {/* Info Banner - Improved mobile alignment */}
           <div style={{
-            background: 'var(--gold-light)',
-            border: '1px solid #e8d5a0',
-            borderRadius: 8,
-            padding: '12px 16px',
-            display: 'flex',
-            gap: 24,
-            flexWrap: 'wrap',
-            flexShrink: 0,
-            alignItems: 'flex-start',        // Better vertical alignment
+            background: 'var(--gold-light)', border: '1px solid #e8d5a0',
+            borderRadius: 8, padding: '12px 16px',
+            display: 'flex', gap: 24, flexWrap: 'wrap',
+            flexShrink: 0, alignItems: 'flex-start', marginBottom: 14,
           }}>
             <div>
               <div style={{ fontSize: 10, color: '#8b6914', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>Approval Date</div>
@@ -97,14 +113,19 @@ export default function PreApprovalPass() {
           </div>
         </div>
 
-        {/* All fields — Responsive Grid (unchanged) */}
+        {/* Fields */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '12px 16px'
+          gap: '12px 16px',
         }}>
-          <Field label="Visitors Number" required>
-            <input value={form.visitorsNumber} onChange={set('visitorsNumber')} placeholder="Auto-generated" style={S} />
+          <Field label="Pass Number">
+            <input
+              value={form.visitorsNumber || generatedNumber}
+              readOnly
+              placeholder="Auto-generated on save"
+              style={{ ...S, background: '#f5f4f0', color: 'var(--green)', fontWeight: 600, cursor: 'not-allowed' }}
+            />
           </Field>
           <Field label="Visitors Name" required>
             <input value={form.visitorsName} onChange={set('visitorsName')} placeholder="Enter full name" style={S} />
@@ -152,10 +173,39 @@ export default function PreApprovalPass() {
 
       </Card>
 
-      <SuccessBanner
-        message={saved ? 'Pre-approval pass saved successfully!' : ''}
-        onDismiss={() => setSaved(false)}
-      />
+      {/* Error */}
+      {error && (
+        <div style={{
+          background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8,
+          padding: '12px 16px', color: '#b91c1c', fontSize: 14,
+          marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {error}
+        </div>
+      )}
+
+      {/* Success with generated number */}
+      {saved && (
+        <div style={{
+          background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8,
+          padding: '14px 18px', marginBottom: 16,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#166534', fontSize: 14 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Pre-approval pass saved! Pass number assigned:
+          </div>
+          <div style={{
+            background: 'var(--green)', color: '#fff',
+            fontWeight: 700, fontSize: 16,
+            padding: '6px 20px', borderRadius: 6,
+            letterSpacing: '0.08em', fontFamily: 'monospace',
+          }}>
+            {generatedNumber}
+          </div>
+        </div>
+      )}
 
       <ActionButtons onSave={handleSave} onCancel={handleCancel} />
     </PageWrapper>
