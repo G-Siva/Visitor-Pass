@@ -25,3 +25,22 @@ export function savePass(formData) {
 export function getPassByNumber(passNumber) {
   return getAllPasses().find(p => p.passNumber === passNumber) || null
 }
+
+// ── Visitor Pass ──
+const VP_KEY = 'tpl_visitor_passes'
+
+export function getAllVisitorPasses() {
+  try { return JSON.parse(localStorage.getItem(VP_KEY)) || [] }
+  catch { return [] }
+}
+
+export function saveVisitorPass(formData, materials) {
+  const passes = getAllVisitorPasses()
+  const newPass = {
+    ...formData,
+    materials,
+    savedAt: new Date().toLocaleString(),
+  }
+  passes.push(newPass)
+  localStorage.setItem(VP_KEY, JSON.stringify(passes))
+}
